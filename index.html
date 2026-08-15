@@ -27,33 +27,41 @@
     <div class="tip" id="off" style="display:none;">服务器当前未在线<br>请稍后再试，或联系房主开启公网</div>
   </div>
 <script>
-var RAW = 'https://raw.githubusercontent.com/hanqifu/pig-entry/main/addr.json';
-function load(){
-  fetch(RAW + '?t=' + Date.now()).then(function(r){ return r.json(); }).then(function(d){
-    if (d && d.on && d.url) {
-      document.getElementById('st').textContent = '已获取最新地址，正在进入…';
-      var go = document.getElementById('go');
-      go.href = d.url;
-      go.style.display = 'inline-block';
-      if (d.qr) {
-        document.getElementById('qrimg').src = d.qr;
-        document.getElementById('qrbox').style.display = 'inline-block';
-      }
-      document.getElementById('off').style.display = 'none';
-      setTimeout(function(){ location.href = d.url; }, 3000);
-    } else {
-      document.getElementById('st').textContent = '服务器当前未在线';
-      document.getElementById('go').style.display = 'none';
-      document.getElementById('qrbox').style.display = 'none';
-      document.getElementById('off').style.display = 'block';
-    }
-  }).catch(function(){
-    document.getElementById('st').textContent = '无法获取地址，请检查网络';
-    document.getElementById('off').style.display = 'block';
-  });
+var SOURCES = [
+  'https://hanqifu.github.io/pig-entry/addr.json',
+  'https://cdn.jsdelivr.net/gh/hanqifu/pig-entry@main/addr.json',
+  'https://raw.githubusercontent.com/hanqifu/pig-entry/main/addr.json'
+];
+function showErr(t){
+  document.getElementById('st').textContent = t;
+  document.getElementById('go').style.display = 'none';
+  document.getElementById('qrbox').style.display = 'none';
+  document.getElementById('off').style.display = 'block';
 }
-load();
-setInterval(load, 15000);
+function render(d){
+  if (d && d.on && d.url) {
+    document.getElementById('st').textContent = '已获取最新地址，正在进入…';
+    var go = document.getElementById('go');
+    go.href = d.url;
+    go.style.display = 'inline-block';
+    if (d.qr) {
+      document.getElementById('qrimg').src = d.qr;
+      document.getElementById('qrbox').style.display = 'inline-block';
+    }
+    document.getElementById('off').style.display = 'none';
+    setTimeout(function(){ location.href = d.url; }, 3000);
+  } else {
+    showErr('服务器当前未在线');
+  }
+}
+function load(i){
+  if (i >= SOURCES.length) { showErr('无法获取地址，请检查网络'); return; }
+  fetch(SOURCES[i] + '?t=' + Date.now()).then(function(r){ return r.json(); }).then(function(d){
+    render(d);
+  }).catch(function(){ load(i + 1); });
+}
+load(0);
+setInterval(function(){ load(0); }, 15000);
 </script>
 </body>
 </html>
